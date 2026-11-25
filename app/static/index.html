@@ -94,6 +94,9 @@
       height: calc(100vh - 56px);
     }
     #map { width: 100%; height: 100%; z-index: 1; }
+    [data-theme="dark"] .leaflet-tile-pane {
+      filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+    }
 
     aside {
       background: var(--panel);
@@ -327,13 +330,10 @@
     };
 
     const map = L.map("map").setView([39.1, 35.2], 6);
-    const darkTiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      attribution: "&copy; OpenStreetMap &copy; CARTO"
-    });
-    const lightTiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    const osmTiles = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap contributors"
     });
-    darkTiles.addTo(map);
+    osmTiles.addTo(map);
 
     let faultLayer = null;
     let faultsVisible = true;
@@ -487,13 +487,9 @@
       const isDark = html.getAttribute("data-theme") === "dark";
       if (isDark) {
         html.setAttribute("data-theme", "light");
-        map.removeLayer(darkTiles);
-        lightTiles.addTo(map);
         e.target.textContent = "Tema: Açık";
       } else {
         html.setAttribute("data-theme", "dark");
-        map.removeLayer(lightTiles);
-        darkTiles.addTo(map);
         e.target.textContent = "Tema: Koyu";
       }
     };
