@@ -809,6 +809,7 @@
             <strong>${ev.title}</strong>
             <span style="color:${ev.severity_color};font-weight:700;font-size:0.7rem;">${ev.severity_level}</span>
           </div>
+          <div style="font-size:0.68rem;color:var(--accent);margin-bottom:3px;">${ev.time_utc || "Tarih bilinmiyor"} • Derinlik: ${ev.depth_km} km</div>
           <div style="color:var(--muted);margin-bottom:4px;">${ev.summary_tr}</div>
           <div style="font-size:0.7rem;"><b>Etkilenenler:</b> ${ev.affected_regions.slice(0, 3).join(", ")}</div>
           <div style="font-size:0.7rem;color:#fbbf24;margin-top:2px;">• ${ev.potential_impacts[0]}</div>

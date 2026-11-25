@@ -111,20 +111,14 @@ def _build_magnitude_impacts(
 
 def fetch_turkey_live_earthquakes(
     min_magnitude: float = 2.5,
-    days_back: int = 7,
     offline_only: bool = False,
 ) -> Tuple[List[EarthquakeRecord], str]:
     """Fetch recent earthquakes across Turkey from USGS FDSN (keyless) with offline fallback."""
     if offline_only:
         return load_historical_earthquakes(), "offline_fallback"
 
-    end_dt = datetime.now(timezone.utc)
-    start_dt = end_dt - timedelta(days=days_back)
-
     params = {
         "format": "geojson",
-        "starttime": start_dt.strftime("%Y-%m-%dT%H:%M:%S"),
-        "endtime": end_dt.strftime("%Y-%m-%dT%H:%M:%S"),
         "minlatitude": 35.5,
         "maxlatitude": 42.5,
         "minlongitude": 25.5,
