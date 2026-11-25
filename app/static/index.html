@@ -299,6 +299,7 @@
       </a>
     </div>
     <div class="header-actions">
+      <button class="btn active-toggle" id="liveToggleBtn">Canlı Afetler</button>
       <button class="btn active-toggle" id="faultToggleBtn">Faylar</button>
       <button class="btn" id="gridToggleBtn">Grid Isı Haritası</button>
       <button class="btn active-toggle" id="assemblyToggleBtn">Toplanma Alanları</button>
@@ -327,6 +328,14 @@
           <span>Çevrimdışı Yedek Veri Modu (Offline Fallback)</span>
           <input type="checkbox" id="offlineToggle" />
         </label>
+      </div>
+
+      <div class="card" id="liveDisastersCard">
+        <div class="card-title">
+          <span>Anlık Afet Bildirimleri</span>
+          <span id="liveSourceBadge" style="font-size:0.68rem;color:var(--accent);">Yükleniyor...</span>
+        </div>
+        <div id="liveDisastersList" style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;"></div>
       </div>
 
       <div class="card">
@@ -414,6 +423,8 @@
     let gridVisible = false;
     let assemblyLayer = L.layerGroup().addTo(map);
     let assemblyVisible = true;
+    let liveLayer = L.layerGroup().addTo(map);
+    let liveVisible = true;
     let marker = null;
 
     let currentReport = null;
@@ -749,8 +760,83 @@
       e.target.textContent = isDark ? "Tema: Açık" : "Tema: Koyu";
     };
 
+    async function loadLiveDisasters() {
+      const offlineOnly = document.getElementById("offlineToggle").checked;
+      const res = await fetch(`/api/live-disasters?min_magnitude=2.5&offline_only=${offlineOnly}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      document.getElementById("liveSourceBadge").textContent =
+        data.source === "usgs-live" ? `Canlı (USGS) • ${data.count}` : `Yedek Katalog • ${data.count}`;
+
+      liveLayer.clearLayers();
+      const list = document.getElementById("liveDisastersList");
+      list.innerHTML = "";
+
+      if (!data.events || data.events.length === 0) {
+        list.innerHTML = `<div style="font-size:0.76rem;color:var(--muted);">Son 7 günde M≥2.5 olay tespit edilmedi.</div>`;
+        return;
+      }
+
+      data.events.slice(0, 8).forEach(ev => {
+        if (liveVisible) {
+          L.circle([ev.lat, ev.lon], {
+            radius: ev.impact_radius_km * 1000,
+            color: ev.severity_color,
+            fillColor: ev.severity_color,
+            fillOpacity: 0.12,
+            weight: 1.5
+          }).addTo(liveLayer);
+
+          L.circleMarker([ev.lat, ev.lon], {
+            radius: Math.max(6, ev.magnitude * 1.6),
+            color: "#ffffff",
+            fillColor: ev.severity_color,
+            fillOpacity: 0.9,
+            weight: 1.5
+          }).bindPopup(
+            `<b>${ev.title}</b><br/>` +
+            `Şiddet: <b style="color:${ev.severity_color}">${ev.severity_level}</b> (${ev.depth_km} km derinlik)<br/>` +
+            `Etkilenen İller: ${ev.affected_regions.join(", ")}<br/>` +
+            `<hr style="margin:4px 0;border-color:#334155"/>` +
+            `${ev.potential_impacts.slice(0, 2).join("<br/>")}`
+          ).addTo(liveLayer);
+        }
+
+        const item = document.createElement("div");
+        item.style.cssText = "background:var(--panel);border:1px solid var(--border);border-left:4px solid " + ev.severity_color + ";border-radius:8px;padding:8px;cursor:pointer;font-size:0.74rem;";
+        item.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+            <strong>${ev.title}</strong>
+            <span style="color:${ev.severity_color};font-weight:700;font-size:0.7rem;">${ev.severity_level}</span>
+          </div>
+          <div style="color:var(--muted);margin-bottom:4px;">${ev.summary_tr}</div>
+          <div style="font-size:0.7rem;"><b>Etkilenenler:</b> ${ev.affected_regions.slice(0, 3).join(", ")}</div>
+          <div style="font-size:0.7rem;color:#fbbf24;margin-top:2px;">• ${ev.potential_impacts[0]}</div>
+        `;
+        item.onclick = () => {
+          map.setView([ev.lat, ev.lon], 8);
+          document.getElementById("latInput").value = ev.lat;
+          document.getElementById("lonInput").value = ev.lon;
+          runAnalysis(ev.lat, ev.lon);
+        };
+        list.appendChild(item);
+      });
+    }
+
+    document.getElementById("liveToggleBtn").onclick = (e) => {
+      liveVisible = !liveVisible;
+      e.target.classList.toggle("active-toggle", liveVisible);
+      if (!liveVisible) liveLayer.clearLayers();
+      else loadLiveDisasters();
+    };
+
+    document.getElementById("offlineToggle").onchange = () => {
+      loadLiveDisasters();
+    };
+
     loadFaults();
     loadProvincesAndPresets();
+    loadLiveDisasters();
     runAnalysis(40.9792, 28.7214);
   </script>
 </body>

@@ -12,6 +12,7 @@ from app.main import (
     get_presets,
     get_zones,
     health_check,
+    live_disasters_endpoint,
     simulate_what_if,
 )
 from src.recommendations import generate_recommendations
@@ -82,3 +83,10 @@ def test_fastapi_endpoints() -> None:
     )
     assert sim["mcda"]["cascading_triggered"] is True
     assert "ml_prediction" in sim
+
+    live = live_disasters_endpoint(min_magnitude=2.5, offline_only=True)
+    assert live["source"] == "offline_fallback"
+    assert live["count"] >= 1
+    first_ev = live["events"][0]
+    assert len(first_ev["affected_regions"]) >= 1
+    assert len(first_ev["potential_impacts"]) >= 1

@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 from src import __doi__, __version__
 from src.config import DEFAULT_WEIGHTS, PROJECT_NAME, RAW_DATA_DIR
 from src.data_loader import load_geotechnical_zones
+from src.live_disasters import get_live_disaster_alerts
 from src.mcda_engine import calculate_mhri
 from src.ml_model import get_local_ml_model
 from src.recommendations import generate_recommendations
@@ -160,6 +161,18 @@ def get_assembly_areas(
 ) -> List[Dict[str, Any]]:
     """Return nearest emergency assembly areas."""
     return find_nearest_assembly_areas(lat, lon, limit=limit)
+
+
+@app.get("/api/live-disasters")
+def live_disasters_endpoint(
+    min_magnitude: float = Query(default=2.5, ge=1.0, le=9.0),
+    offline_only: bool = Query(default=False),
+) -> Dict[str, Any]:
+    """Return real-time disaster alerts with affected regions and magnitude-based impacts."""
+    return get_live_disaster_alerts(
+        min_magnitude=min_magnitude,
+        offline_only=offline_only,
+    )
 
 
 @app.post("/api/simulate")
