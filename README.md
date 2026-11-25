@@ -47,7 +47,7 @@ $$
 ## Kurulum ve Çalıştırma
 
 ```bash
-git clone https://github.com/KenanPolat/Afetin-Izinde.git
+git clone https://github.com/Kenan0z/Afetin-Izinde.git
 cd Afetin-Izinde
 pip install -r requirements.txt
 ```
