@@ -1,0 +1,15 @@
+name,city,lat,lon,capacity,type
+Gençlik Parkı Toplanma Alanı,Ankara,39.9369,32.8505,25000,Park / Açık Alan
+Anıtpark Toplanma Alanı,Ankara,39.9278,32.8390,15000,Park / Açık Alan
+Maltepe Sahil Etkinlik Alanı,İstanbul,40.9165,29.1332,80000,Sahil Dolgu Alanı
+Avcılar Ambarlı Sahil Parkı,İstanbul,40.9688,28.7210,18000,Sahil Parkı
+Yenikapı Etkinlik Alanı,İstanbul,41.0038,28.9532,120000,Meydan / Açık Alan
+Atatürk Parkı Toplanma Alanı,Hatay,36.2055,36.1582,12000,Şehir Parkı
+İskenderun Sahil Parkı,Hatay,36.5912,36.1735,22000,Sahil Parkı
+Rize Sahil Külliyesi Açık Alanı,Rize,41.0245,40.5180,10000,Sahil Açık Alan
+Kültürpark Toplanma Alanı,İzmir,38.4285,27.1425,45000,Fuar / Park
+Bostanlı Sahil Parkı,İzmir,38.4540,27.0980,30000,Sahil Parkı
+Merinos Parkı Toplanma Alanı,Bursa,40.1955,29.0480,35000,Park / Açık Alan
+Mevlana Meydanı Açık Alanı,Konya,37.8708,32.5050,30000,Meydan / Açık Alan
+Erzincan Ekşisu Mesire Alanı,Erzincan,39.7320,39.6150,20000,Açık Alan
+Kahramanmaraş 12 Şubat Stadyum Çevresi,Kahramanmaraş,37.5790,36.9370,18000,Spor Kompleksi

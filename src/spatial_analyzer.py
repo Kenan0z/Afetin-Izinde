@@ -2,7 +2,7 @@
 
 import math
 from dataclasses import dataclass
-from typing import Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from src.config import MAX_FAULT_DISTANCE_KM, MAX_PRECIP_MM_7D, MAX_SLOPE_DEG
 from src.data_loader import (
@@ -12,6 +12,7 @@ from src.data_loader import (
     fetch_open_meteo_slope_deg,
     fetch_usgs_recent_earthquakes,
     load_active_faults,
+    load_assembly_areas,
     load_geotechnical_zones,
 )
 from src.mcda_engine import MHRResult, calculate_mhri, clamp, normalize_min_max
@@ -254,3 +255,73 @@ def analyze_coordinate(
     )
 
     return SpatialRiskReport(metadata=metadata, mcda=mcda_result)
+
+
+def find_nearest_assembly_areas(
+    lat: float,
+    lon: float,
+    limit: int = 3,
+) -> List[Dict[str, Any]]:
+    """Return the closest emergency assembly areas with Haversine distance in km."""
+    areas = load_assembly_areas()
+    ranked = sorted(
+        areas,
+        key=lambda area: haversine_km(lat, lon, area.lat, area.lon),
+    )[:limit]
+    return [
+        {
+            "name": area.name,
+            "city": area.city,
+            "lat": area.lat,
+            "lon": area.lon,
+            "capacity": area.capacity,
+            "type": area.area_type,
+            "distance_km": round(haversine_km(lat, lon, area.lat, area.lon), 2),
+        }
+        for area in ranked
+    ]
+
+
+def analyze_grid(
+    center_lat: float,
+    center_lon: float,
+    radius_km: float = 15.0,
+    grid_size: int = 7,
+    weights: Optional[Mapping[str, float]] = None,
+) -> List[Dict[str, Any]]:
+    """Compute an N x N spatial risk heatmap grid around (center_lat, center_lon).
+
+    Uses local offline datasets for fast, deterministic grid scanning.
+    """
+    if grid_size < 3 or grid_size > 15:
+        raise ValueError("grid_size must be between 3 and 15")
+
+    lat_span = radius_km / 111.32
+    lon_span = radius_km / (111.32 * max(0.1, math.cos(math.radians(center_lat))))
+    d_lat = (2.0 * lat_span) / grid_size
+    d_lon = (2.0 * lon_span) / grid_size
+
+    cells: List[Dict[str, Any]] = []
+    start_lat = center_lat - lat_span + (d_lat / 2.0)
+    start_lon = center_lon - lon_span + (d_lon / 2.0)
+
+    for row in range(grid_size):
+        for col in range(grid_size):
+            c_lat = round(start_lat + row * d_lat, 5)
+            c_lon = round(start_lon + col * d_lon, 5)
+            report = analyze_coordinate(c_lat, c_lon, weights=weights, offline_only=True)
+            cells.append(
+                {
+                    "lat": c_lat,
+                    "lon": c_lon,
+                    "bounds": [
+                        [round(c_lat - d_lat / 2.0, 5), round(c_lon - d_lon / 2.0, 5)],
+                        [round(c_lat + d_lat / 2.0, 5), round(c_lon + d_lon / 2.0, 5)],
+                    ],
+                    "mhri": report.mcda.mhri,
+                    "risk_level_tr": report.mcda.risk_level_tr,
+                    "color_hex": report.mcda.color_hex,
+                    "alpha": report.mcda.alpha,
+                }
+            )
+    return cells

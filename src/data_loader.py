@@ -59,6 +59,18 @@ class EarthquakeRecord:
     location: str
 
 
+@dataclass(frozen=True)
+class AssemblyArea:
+    """Emergency assembly / safe evacuation open area."""
+
+    name: str
+    city: str
+    lat: float
+    lon: float
+    capacity: int
+    area_type: str
+
+
 def load_active_faults(path: Optional[Path] = None) -> List[FaultSegment]:
     """Load active fault segments from local GeoJSON."""
     target = path or (RAW_DATA_DIR / "active_faults.geojson")
@@ -132,6 +144,26 @@ def load_historical_earthquakes(path: Optional[Path] = None) -> List[EarthquakeR
                 )
             )
     return records
+
+
+def load_assembly_areas(path: Optional[Path] = None) -> List[AssemblyArea]:
+    """Load emergency assembly areas from local CSV."""
+    target = path or (RAW_DATA_DIR / "assembly_areas.csv")
+    areas: List[AssemblyArea] = []
+    with target.open("r", encoding="utf-8", newline="") as fh:
+        reader = csv.DictReader(fh)
+        for row in reader:
+            areas.append(
+                AssemblyArea(
+                    name=str(row["name"]),
+                    city=str(row["city"]),
+                    lat=float(row["lat"]),
+                    lon=float(row["lon"]),
+                    capacity=int(row["capacity"]),
+                    area_type=str(row["type"]),
+                )
+            )
+    return areas
 
 
 def fetch_open_meteo_precip_7d(

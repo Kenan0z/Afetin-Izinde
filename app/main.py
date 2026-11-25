@@ -12,8 +12,15 @@ from pydantic import BaseModel, Field
 
 from src import __doi__, __version__
 from src.config import DEFAULT_WEIGHTS, PROJECT_NAME, RAW_DATA_DIR
+from src.data_loader import load_geotechnical_zones
+from src.mcda_engine import calculate_mhri
+from src.ml_model import get_local_ml_model
 from src.recommendations import generate_recommendations
-from src.spatial_analyzer import analyze_coordinate
+from src.spatial_analyzer import (
+    analyze_coordinate,
+    analyze_grid,
+    find_nearest_assembly_areas,
+)
 
 APP_DIR = Path(__file__).resolve().parent
 STATIC_DIR = APP_DIR / "static"
@@ -105,9 +112,69 @@ def analyze_post(payload: AnalyzeRequest) -> Dict[str, Any]:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     actions = generate_recommendations(report.mcda)
+    ml_pred = get_local_ml_model().predict(report.mcda.parameters, report.mcda.mhri)
+    assembly_areas = find_nearest_assembly_areas(payload.lat, payload.lon, limit=3)
+
     return {
         "metadata": asdict(report.metadata),
         "mcda": asdict(report.mcda),
+        "ml_prediction": asdict(ml_pred),
+        "assembly_areas": assembly_areas,
+        "recommendations": asdict(actions),
+    }
+
+
+class SimulateRequest(BaseModel):
+    """Request body for What-If scenario simulation."""
+
+    parameters: Dict[str, float]
+    weights: Optional[Dict[str, float]] = None
+
+
+@app.get("/api/zones")
+def get_zones() -> List[Dict[str, Any]]:
+    """Return all 81 Turkish province reference zones."""
+    return [
+        {"name": z.region, "lat": z.lat, "lon": z.lon, "soil_class": z.soil_class}
+        for z in load_geotechnical_zones()
+    ]
+
+
+@app.get("/api/grid")
+def get_grid_heatmap(
+    lat: float = Query(..., ge=-90.0, le=90.0),
+    lon: float = Query(..., ge=-180.0, le=180.0),
+    radius_km: float = Query(default=15.0, ge=2.0, le=60.0),
+    grid_size: int = Query(default=7, ge=3, le=15),
+) -> Dict[str, Any]:
+    """Compute an N x N spatial risk heatmap grid around the target coordinate."""
+    cells = analyze_grid(lat, lon, radius_km=radius_km, grid_size=grid_size)
+    return {"center": {"lat": lat, "lon": lon}, "grid_size": grid_size, "cells": cells}
+
+
+@app.get("/api/assembly-areas")
+def get_assembly_areas(
+    lat: float = Query(..., ge=-90.0, le=90.0),
+    lon: float = Query(..., ge=-180.0, le=180.0),
+    limit: int = Query(default=3, ge=1, le=10),
+) -> List[Dict[str, Any]]:
+    """Return nearest emergency assembly areas."""
+    return find_nearest_assembly_areas(lat, lon, limit=limit)
+
+
+@app.post("/api/simulate")
+def simulate_what_if(payload: SimulateRequest) -> Dict[str, Any]:
+    """Run What-If simulation with custom parameters and/or weights."""
+    try:
+        mcda = calculate_mhri(payload.parameters, weights=payload.weights)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    ml_pred = get_local_ml_model().predict(mcda.parameters, mcda.mhri)
+    actions = generate_recommendations(mcda)
+    return {
+        "mcda": asdict(mcda),
+        "ml_prediction": asdict(ml_pred),
         "recommendations": asdict(actions),
     }
 
