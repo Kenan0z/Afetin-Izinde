@@ -1,0 +1,7 @@
+event_id,date,lat,lon,magnitude,depth_km,pga_g,location
+TR-1999-IZMIT,1999-08-17,40.748,29.864,7.6,17.0,0.41,İzmit / Kocaeli
+TR-1999-DUZCE,1999-11-12,40.758,31.161,7.2,10.0,0.51,Düzce
+TR-2020-IZMIR,2020-10-30,37.888,26.777,7.0,16.5,0.29,Ege Denizi / İzmir
+TR-2023-PAZARCIK,2023-02-06,37.226,37.014,7.8,10.0,0.64,Pazarcık / Kahramanmaraş
+TR-2023-ELBISTAN,2023-02-06,38.011,37.196,7.5,7.4,0.53,Elbistan / Kahramanmaraş
+TR-1939-ERZINCAN,1939-12-27,39.770,39.530,7.8,20.0,0.49,Erzincan

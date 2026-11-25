@@ -1,0 +1,9 @@
+region,lat,lon,radius_km,soil_class,liquefaction_potential,slope_deg,drainage_density,avg_precip_7d_mm,building_density,building_age_score
+Ankara (Çankaya),39.9208,32.8541,45,ZB,0.18,6.5,0.25,18.0,0.52,0.35
+İstanbul (Avcılar/Marmara),40.9792,28.7214,35,ZD,0.82,11.0,0.45,32.0,0.90,0.78
+Hatay (Antakya),36.2021,36.1606,40,ZE,0.91,14.5,0.68,48.0,0.84,0.82
+Rize (Merkez),41.0201,40.5234,40,ZC,0.38,34.0,0.92,135.0,0.58,0.55
+İzmir (Bayraklı),38.4622,27.1672,35,ZE,0.86,9.5,0.52,29.0,0.86,0.74
+Konya (Meram),37.8746,32.4932,50,ZC,0.15,2.5,0.15,12.0,0.40,0.30
+Erzincan (Merkez),39.7500,39.5000,35,ZD,0.76,16.0,0.48,26.0,0.64,0.62
+Kahramanmaraş (Dulkadiroğlu),37.5753,36.9228,40,ZD,0.79,19.0,0.55,38.0,0.78,0.76

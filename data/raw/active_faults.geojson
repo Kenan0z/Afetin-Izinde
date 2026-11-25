@@ -1,0 +1,113 @@
+{
+  "type": "FeatureCollection",
+  "name": "turkey_active_faults_sample",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Kuzey Anadolu Fayı - Marmara Segmenti",
+        "fault_system": "NAFZ",
+        "slip_rate_mm_yr": 24.0,
+        "historical_pga_g": 0.48
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [27.30, 40.72],
+          [28.15, 40.82],
+          [28.95, 40.87],
+          [29.40, 40.76],
+          [30.35, 40.74]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Kuzey Anadolu Fayı - Erzincan Segmenti",
+        "fault_system": "NAFZ",
+        "slip_rate_mm_yr": 21.0,
+        "historical_pga_g": 0.45
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [38.60, 39.88],
+          [39.49, 39.75],
+          [40.25, 39.58]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Doğu Anadolu Fayı - Hatay/Amik Segmenti",
+        "fault_system": "EAFZ",
+        "slip_rate_mm_yr": 10.5,
+        "historical_pga_g": 0.56
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [36.05, 36.05],
+          [36.16, 36.21],
+          [36.45, 36.65],
+          [36.88, 37.38]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Doğu Anadolu Fayı - Kahramanmaraş/Elazığ Segmenti",
+        "fault_system": "EAFZ",
+        "slip_rate_mm_yr": 11.0,
+        "historical_pga_g": 0.52
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [36.92, 37.57],
+          [37.65, 37.90],
+          [38.45, 38.28],
+          [39.22, 38.67]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Gediz Grabeni ve İzmir Fay Zonu",
+        "fault_system": "AEGEAN",
+        "slip_rate_mm_yr": 8.0,
+        "historical_pga_g": 0.38
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [26.85, 38.38],
+          [27.14, 38.42],
+          [27.85, 38.48],
+          [28.55, 38.30]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Tuz Gölü Fay Zonu",
+        "fault_system": "CENTRAL_ANATOLIA",
+        "slip_rate_mm_yr": 1.5,
+        "historical_pga_g": 0.14
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [33.35, 39.10],
+          [33.80, 38.65],
+          [34.15, 38.15]
+        ]
+      }
+    }
+  ]
+}

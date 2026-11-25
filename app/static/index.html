@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Afetin İzinde — Çoklu Afet Risk Analizi & Karar Destek Sistemi</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    crossorigin=""
+  />
+  <style>
+    :root {
+      --bg: #0b1120;
+      --panel: #111827;
+      --card: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.15);
+    }
+    [data-theme="light"] {
+      --bg: #f1f5f9;
+      --panel: #ffffff;
+      --card: #f8fafc;
+      --border: #cbd5e1;
+      --text: #0f172a;
+      --muted: #475569;
+      --accent: #0284c7;
+      --accent-soft: rgba(2, 132, 199, 0.12);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: grid;
+      grid-template-rows: 56px 1fr;
+      overflow: hidden;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+    .badge-doi {
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    button.btn {
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      transition: all 0.15s ease;
+    }
+    button.btn:hover { border-color: var(--accent); color: var(--accent); }
+    button.btn-primary {
+      background: var(--accent);
+      color: #0b1120;
+      border-color: var(--accent);
+    }
+    button.btn-primary:hover { opacity: 0.9; color: #0b1120; }
+
+    main {
+      display: grid;
+      grid-template-columns: 1fr 430px;
+      height: calc(100vh - 56px);
+    }
+    #map { width: 100%; height: 100%; z-index: 1; }
+
+    aside {
+      background: var(--panel);
+      border-left: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .card-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .preset-btn {
+      font-size: 0.75rem;
+      padding: 4px 9px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .preset-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .coord-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 7px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      font-size: 0.85rem;
+    }
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .mhri-hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .mhri-score {
+      font-size: 2.1rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .risk-pill {
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #0b1120;
+    }
+    .alpha-banner {
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: rgba(249, 115, 22, 0.15);
+      border: 1px solid rgba(249, 115, 22, 0.4);
+      font-size: 0.78rem;
+      color: #fb923c;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+      font-size: 0.78rem;
+    }
+    .meta-item span { display: block; color: var(--muted); font-size: 0.7rem; }
+
+    .param-bar-row { margin-bottom: 8px; }
+    .param-bar-head {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      margin-bottom: 3px;
+    }
+    .bar-track {
+      height: 7px;
+      background: var(--panel);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 6px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+    ul.action-list {
+      padding-left: 16px;
+      font-size: 0.8rem;
+      line-height: 1.45;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    @media (max-width: 900px) {
+      main { grid-template-columns: 1fr; grid-template-rows: 45vh 1fr; }
+      aside { border-left: none; border-top: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span>Afetin İzinde</span>
+      <a class="badge-doi" href="https://doi.org/10.5281/zenodo.24514467" target="_blank" rel="noopener">
+        DOI: 10.5281/zenodo.24514467
+      </a>
+    </div>
+    <div class="header-actions">
+      <button class="btn" id="faultToggleBtn">Fay Hatları: Açık</button>
+      <button class="btn" id="themeToggleBtn">Tema: Koyu</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="map"></div>
+
+    <aside>
+      <div class="card">
+        <div class="card-title">Konum Seçimi (Haritaya Tıklayın)</div>
+        <div class="presets" id="presetContainer"></div>
+        <div class="coord-row">
+          <input type="number" id="latInput" step="0.0001" value="40.9792" placeholder="Enlem" />
+          <input type="number" id="lonInput" step="0.0001" value="28.7214" placeholder="Boylam" />
+          <button class="btn btn-primary" id="analyzeBtn">Analiz Et</button>
+        </div>
+        <label class="toggle-row">
+          <span>Çevrimdışı Yedek Veri Modu (Offline Fallback)</span>
+          <input type="checkbox" id="offlineToggle" />
+        </label>
+      </div>
+
+      <div class="card" id="resultCard">
+        <div class="card-title">Bileşik Çoklu Afet Risk İndeksi (MHRI)</div>
+        <div class="mhri-hero">
+          <div>
+            <div class="mhri-score" id="mhriScore">--</div>
+            <div style="font-size:0.75rem;color:var(--muted)" id="baseMhriText">Taban Skor: --</div>
+          </div>
+          <div class="risk-pill" id="riskPill" style="background:#334155;color:#f8fafc;">Bekleniyor</div>
+        </div>
+        <div class="alpha-banner" id="alphaBanner" style="display:none;"></div>
+        <div class="meta-grid">
+          <div class="meta-item"><span>En Yakın Fay</span><strong id="faultName">--</strong></div>
+          <div class="meta-item"><span>Fay Mesafesi</span><strong id="faultDist">--</strong></div>
+          <div class="meta-item"><span>Zemin / Bölge</span><strong id="soilZone">--</strong></div>
+          <div class="meta-item"><span>Eğim / 7g Yağış</span><strong id="topoHydro">--</strong></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">5 Temel MCDA Parametresi [0.0 - 1.0]</div>
+        <div id="paramBars"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Dinamik Karar Destek ve Eylem Planı</div>
+        <p id="recSummary" style="font-size:0.8rem;color:var(--muted);margin-bottom:10px;"></p>
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="citizen">Vatandaş</button>
+          <button class="tab-btn" data-tab="municipality">Yerel Yönetim</button>
+        </div>
+        <ul class="action-list" id="actionList"></ul>
+      </div>
+    </aside>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script>
+    const PARAM_META = {
+      S_p: { label: "S_p — Sismik Yakınlık (w=0.30)", color: "#ef4444" },
+      G_s: { label: "G_s — Zemin & Sıvılaşma (w=0.25)", color: "#f97316" },
+      T_e: { label: "T_e — Topoğrafik Eğim (w=0.15)", color: "#eab308" },
+      H_m: { label: "H_m — Hidro-Meteorolojik (w=0.15)", color: "#38bdf8" },
+      E_d: { label: "E_d — Yapısal Maruziyet (w=0.15)", color: "#a855f7" }
+    };
+
+    const map = L.map("map").setView([39.1, 35.2], 6);
+    const darkTiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      attribution: "&copy; OpenStreetMap &copy; CARTO"
+    });
+    const lightTiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors"
+    });
+    darkTiles.addTo(map);
+
+    let faultLayer = null;
+    let faultsVisible = true;
+    let marker = null;
+    let lastRecommendations = null;
+    let activeTab = "citizen";
+
+    async function loadFaults() {
+      const res = await fetch("/api/faults");
+      const geojson = await res.json();
+      faultLayer = L.geoJSON(geojson, {
+        style: { color: "#f43f5e", weight: 2.5, opacity: 0.8, dashArray: "6,4" },
+        onEachFeature: (f, layer) => {
+          const p = f.properties || {};
+          layer.bindPopup(`<b>${p.name || "Fay"}</b><br/>Sistem: ${p.fault_system}<br/>Tarihsel PGA: ${p.historical_pga_g}g`);
+        }
+      }).addTo(map);
+    }
+
+    async function loadPresets() {
+      const res = await fetch("/api/presets");
+      const presets = await res.json();
+      const container = document.getElementById("presetContainer");
+      presets.forEach(p => {
+        const btn = document.createElement("button");
+        btn.className = "preset-btn";
+        btn.textContent = p.name;
+        btn.onclick = () => {
+          document.getElementById("latInput").value = p.lat;
+          document.getElementById("lonInput").value = p.lon;
+          map.setView([p.lat, p.lon], 10);
+          runAnalysis(p.lat, p.lon);
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    async function runAnalysis(lat, lon) {
+      const offlineOnly = document.getElementById("offlineToggle").checked;
+      if (marker) map.removeLayer(marker);
+      marker = L.circleMarker([lat, lon], {
+        radius: 9, color: "#38bdf8", fillColor: "#38bdf8", fillOpacity: 0.5, weight: 2
+      }).addTo(map);
+
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lat, lon, offline_only: offlineOnly })
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      renderReport(data);
+    }
+
+    function renderReport(data) {
+      const { metadata, mcda, recommendations } = data;
+      document.getElementById("mhriScore").textContent = mcda.mhri.toFixed(4);
+      document.getElementById("baseMhriText").textContent = `Taban Skor: ${mcda.base_mhri.toFixed(4)} | α=${mcda.alpha}`;
+
+      const pill = document.getElementById("riskPill");
+      pill.textContent = mcda.risk_level_tr;
+      pill.style.background = mcda.color_hex;
+      pill.style.color = "#0b1120";
+
+      if (marker) {
+        marker.setStyle({ color: mcda.color_hex, fillColor: mcda.color_hex });
+      }
+
+      const alphaBanner = document.getElementById("alphaBanner");
+      if (mcda.cascading_triggered) {
+        alphaBanner.style.display = "block";
+        alphaBanner.textContent = `Zincirleme Etkileşim Çarpanı Aktif (α=${mcda.alpha}): ${mcda.triggered_parameters.join(", ")} parametreleri ≥ 0.70 eşiğinde.`;
+      } else {
+        alphaBanner.style.display = "none";
+      }
+
+      document.getElementById("faultName").textContent = metadata.nearest_fault_name;
+      document.getElementById("faultDist").textContent = `${metadata.nearest_fault_distance_km} km`;
+      document.getElementById("soilZone").textContent = `${metadata.soil_class} (${metadata.nearest_zone_region})`;
+      document.getElementById("topoHydro").textContent = `${metadata.slope_deg}° / ${metadata.precip_7d_mm} mm`;
+
+      const bars = document.getElementById("paramBars");
+      bars.innerHTML = "";
+      Object.entries(PARAM_META).forEach(([key, meta]) => {
+        const val = mcda.parameters[key];
+        const pct = Math.round(val * 100);
+        bars.innerHTML += `
+          <div class="param-bar-row">
+            <div class="param-bar-head">
+              <span>${meta.label}</span>
+              <strong>${val.toFixed(2)}</strong>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:${pct}%;background:${meta.color};"></div>
+            </div>
+          </div>`;
+      });
+
+      lastRecommendations = recommendations;
+      document.getElementById("recSummary").textContent = recommendations.summary_tr;
+      renderActionList();
+    }
+
+    function renderActionList() {
+      if (!lastRecommendations) return;
+      const items = activeTab === "citizen"
+        ? lastRecommendations.citizen_actions
+        : lastRecommendations.municipality_actions;
+      const list = document.getElementById("actionList");
+      list.innerHTML = items.map(item => `<li>${item}</li>`).join("");
+    }
+
+    map.on("click", (e) => {
+      const lat = Number(e.latlng.lat.toFixed(4));
+      const lon = Number(e.latlng.lng.toFixed(4));
+      document.getElementById("latInput").value = lat;
+      document.getElementById("lonInput").value = lon;
+      runAnalysis(lat, lon);
+    });
+
+    document.getElementById("analyzeBtn").onclick = () => {
+      const lat = parseFloat(document.getElementById("latInput").value);
+      const lon = parseFloat(document.getElementById("lonInput").value);
+      map.setView([lat, lon], 10);
+      runAnalysis(lat, lon);
+    };
+
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        activeTab = btn.dataset.tab;
+        renderActionList();
+      };
+    });
+
+    document.getElementById("faultToggleBtn").onclick = (e) => {
+      if (!faultLayer) return;
+      if (faultsVisible) {
+        map.removeLayer(faultLayer);
+        e.target.textContent = "Fay Hatları: Kapalı";
+      } else {
+        faultLayer.addTo(map);
+        e.target.textContent = "Fay Hatları: Açık";
+      }
+      faultsVisible = !faultsVisible;
+    };
+
+    document.getElementById("themeToggleBtn").onclick = (e) => {
+      const html = document.documentElement;
+      const isDark = html.getAttribute("data-theme") === "dark";
+      if (isDark) {
+        html.setAttribute("data-theme", "light");
+        map.removeLayer(darkTiles);
+        lightTiles.addTo(map);
+        e.target.textContent = "Tema: Açık";
+      } else {
+        html.setAttribute("data-theme", "dark");
+        map.removeLayer(lightTiles);
+        darkTiles.addTo(map);
+        e.target.textContent = "Tema: Koyu";
+      }
+    };
+
+    loadFaults();
+    loadPresets();
+    runAnalysis(40.9792, 28.7214);
+  </script>
+</body>
+</html>
